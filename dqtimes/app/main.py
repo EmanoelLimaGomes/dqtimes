@@ -6,7 +6,9 @@ import dask.dataframe as dd
 import tempfile
 from dask.distributed import Client, LocalCluster
 from app import forecast_temp
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import math
 import time
 
@@ -16,10 +18,29 @@ client = Client(cluster)
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 @app.on_event("startup")
 async def startup_event():
     print(f"Dask Dashboard is available at {client.dashboard_link}")
+
+# mapeando rotas publicas com roteamento seguro - usando FileResponse do FastAPI
+
+#/
+@app.get("/")
+async def root():
+    return FileResponse("app/templates/index.html", media_type="text/html")
+
+#/app
+@app.get("/app")
+async def app_page():
+    return FileResponse("app/templates/app.html", media_type="text/html")
+
+#/historico
+@app.get("/historico")
+async def historico():
+    return FileResponse("app/templates/historico.html", media_type="text/html")
 
 
 @app.post("/projecao_lista/")
