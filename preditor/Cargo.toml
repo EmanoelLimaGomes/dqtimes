@@ -3,5 +3,18 @@ name = "preditor"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "preditor"
+crate-type = ["cdylib"]
+
+[dependencies]
+thiserror = "2.0.17"
+pyo3 = { version = "0.21", features = ["extension-module"] }
+serde = { version = "1", features = ["derive"] }
+[package]
+name = "preditor"
+version = "0.1.0"
+edition = "2024"
+
 [dependencies]
 thiserror = "2.0.17"

@@ -1,0 +1,60 @@
+   0.066715600s  INFO prepare_target{force=false package_id=preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor) target="preditor"}: cargo::core::compiler::fingerprint: fingerprint error for preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("preditor", ["lib"], "C:\\Users\\ferna\\dqtimes\\dqtimes_Grupo2\\preditor\\src\\lib.rs", Edition2024) }
+   0.066831300s  INFO prepare_target{force=false package_id=preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor) target="preditor"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor\target\debug\.fingerprint\preditor-8fd45766db048833\lib-preditor`
+
+Caused by:
+    O sistema não pode encontrar o arquivo especificado. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.147082300s  INFO prepare_target{force=false package_id=preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor) target="preditor"}: cargo::core::compiler::fingerprint: fingerprint error for preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("preditor", ["lib"], "C:\\Users\\ferna\\dqtimes\\dqtimes_Grupo2\\preditor\\src\\lib.rs", Edition2024) }
+   0.147595600s  INFO prepare_target{force=false package_id=preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor) target="preditor"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor\target\debug\.fingerprint\preditor-37472bb6ce3223f1\test-lib-preditor`
+
+Caused by:
+    O sistema não pode encontrar o arquivo especificado. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+    Checking preditor v0.1.0 (C:\Users\ferna\dqtimes\dqtimes_Grupo2\preditor)
+error: could not compile `preditor` (lib) due to 10 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `preditor` (lib test) due to 10 previous errors

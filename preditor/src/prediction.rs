@@ -45,5 +45,13 @@ pub meta: Option<HashMap<String, String>>,
 
 
 impl ForecastResult {
-pub fn new(forecast: Vec<f64>) -> Self {
+    pub fn new(forecast: Vec<f64>) -> Self {
+        Self {
+            forecast,
+            timestamps: None,
+            lower: None,
+            upper: None,
+            meta: None,
+        }
+    }
 }
