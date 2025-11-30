@@ -1,0 +1,135 @@
+.historico-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.historico-container {
+  background-color: white;
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.historico-container h2 {
+  margin-bottom: 20px;
+  color: #000;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.busca-container {
+  margin-bottom: 20px;
+}
+
+.busca-input {
+  width: 60%;
+  max-width: 500px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.busca-input:focus {
+  outline: none;
+  border-color: #20b2aa;
+}
+
+.busca-input::placeholder {
+  color: #999;
+}
+
+.tabela-wrapper {
+  overflow-x: auto;
+}
+
+.tabela-historico {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.tabela-historico thead {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tabela-historico th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #000;
+  border-bottom: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.info-icon {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #007bff;
+  cursor: help;
+  vertical-align: middle;
+  font-weight: normal;
+}
+
+.tabela-historico tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+.tabela-historico tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.tabela-historico tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.tabela-historico tbody tr:hover {
+  background-color: #e8f4f4;
+}
+
+.tabela-historico td {
+  padding: 16px;
+  color: #333;
+}
+
+/* Colunas TAREFA (2ª) e PREVISÃO (4ª) mais escuras */
+.tabela-historico td:nth-child(2),
+.tabela-historico td:nth-child(4) {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.tabela-historico tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .historico-page {
+    padding: 20px 10px;
+  }
+
+  .historico-container {
+    padding: 20px;
+  }
+
+  .tabela-historico {
+    font-size: 14px;
+  }
+
+  .tabela-historico th,
+  .tabela-historico td {
+    padding: 12px 8px;
+  }
+
+  .info-icon {
+    display: none;
+  }
+}
