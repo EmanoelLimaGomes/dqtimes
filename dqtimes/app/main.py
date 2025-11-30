@@ -3,6 +3,7 @@ import io
 import asyncio
 import json
 import dask.dataframe as dd
+import pandas as pd
 import tempfile
 from dask.distributed import Client, LocalCluster
 from app import forecast_temp
@@ -11,6 +12,7 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import math
 import time
+import logging
 
 # Iniciar um cluster local e um cliente Dask
 cluster = LocalCluster()
@@ -20,10 +22,22 @@ app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# configura o loggin - registro de logs
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+
+# configura o ambiente do fallback
+FORCE_FALLBACK = os.getenv("FORCE_FALLBACK", "false").lower() in ("1", "true", "yes")
+
+# metricas simples em memoria - integrar o prometheus depois aui
+_metrics = {
+    "fallback_count": 0,
+    "requests_csv": 0
+}
+
 
 @app.on_event("startup")
 async def startup_event():
-    print(f"Dask Dashboard is available at {client.dashboard_link}")
+    logging.info(f"Dask Dashboard is available at {client.dashboard_link}")
 
 # mapeando rotas publicas com roteamento seguro - usando FileResponse do FastAPI
 
@@ -41,6 +55,34 @@ async def app_page():
 @app.get("/historico")
 async def historico():
     return FileResponse("app/templates/historico.html", media_type="text/html")
+
+
+#/health - checagem de saude health 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+#/ready - checagem de saude readiness
+@app.get("/ready")
+async def readiness():
+    try:
+        # verificando se o dask esta conectado e o scheduler ta responsivo
+        info = client.scheduler_info()
+        if info:
+            return {"status": "ready"}
+        else:
+            raise HTTPException(status_code=503, detail="Scheduler not responsive")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
+
+
+#/metrics - metricas simples - substituir por prometheus depois
+@app.get("/metrics")
+async def metrics():
+    """Endpointe de metricas simples (JSON).
+    utilizado para checagens rapidas, mas tem que trocar pelo prometheis depois.
+    """
+    return _metrics
 
 
 @app.post("/projecao_lista/")
@@ -76,33 +118,73 @@ async def upload_file(
         tmp_file.write(await csv_dataframe.read())
         tmp_file_path = tmp_file.name
 
-    ddf = dd.read_csv(tmp_file_path, header=0 if header else None)
+    #incrementa os requests
+    _metrics["requests_csv"] += 1
 
-    if index_col:
-        ddf = ddf.drop(ddf.columns[0], axis=1)
-
-    # Calcular o número total de linhas e o número total de páginas
-    total_rows = len(ddf)
-    total_pages = math.ceil(total_rows / page_size)
-
-    # Verificar se o número da página é válido
-    if page > total_pages:
-        raise HTTPException(status_code=404, detail="Page number out of range")
-
-    # Calcular o índice inicial e final para a paginação
-    start_index = (page - 1) * page_size
-    end_index = start_index + page_size
-
-    # Aplicar a paginação ao DataFrame
-    ddf_paginated = ddf.loc[start_index:end_index]
-
-    start_time = time.time()
     lista_df = []
+    start_time = time.time()
 
-    for part in ddf_paginated.to_delayed():
-        # Converter a partição para um pandas DataFrame e iterar sobre as linhas
-        for index, row in part.compute().iterrows():
+    # se forcar o fallback pelo ambiente, ele para de tentar a usar o dask e vai para o pandas
+    if FORCE_FALLBACK:
+        logging.warning("FORCE_FALLBACK ativo: usando fallback pandas para o processamento de csv")
+        pdf = pd.read_csv(tmp_file_path, header=0 if header else None)
+        if index_col:
+            pdf = pdf.drop(pdf.columns[0], axis=1)
+
+        total_rows = len(pdf)
+        total_pages = math.ceil(total_rows / page_size)
+
+        if page > total_pages:
+            raise HTTPException(status_code=404, detail="numero de pagina fora do range")
+
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+
+        pdf_slice = pdf.iloc[start_index:end_index]
+        for index, row in pdf_slice.iterrows():
             lista_df.append(row.tolist())
+
+        _metrics["fallback_count"] += 1
+    else:
+        #aqui ele tenta o dask primeiro, mas se falhar manda para o pandas
+        try:
+            ddf = dd.read_csv(tmp_file_path, header=0 if header else None)
+            if index_col:
+                ddf = ddf.drop(ddf.columns[0], axis=1)
+
+            total_rows = len(ddf)
+            total_pages = math.ceil(total_rows / page_size)
+
+            if page > total_pages:
+                raise HTTPException(status_code=404, detail="numero de pagina fora do range")
+
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+
+            ddf_paginated = ddf.loc[start_index:end_index]
+            for part in ddf_paginated.to_delayed():
+                for index, row in part.compute().iterrows():
+                    lista_df.append(row.tolist())
+        except Exception as e:
+            logging.warning(f"processamento em dask falhou, voltando a utilizar pandas: {e}")
+            pdf = pd.read_csv(tmp_file_path, header=0 if header else None)
+            if index_col:
+                pdf = pdf.drop(pdf.columns[0], axis=1)
+
+            total_rows = len(pdf)
+            total_pages = math.ceil(total_rows / page_size)
+
+            if page > total_pages:
+                raise HTTPException(status_code=404, detail="numero de pagina fora do range")
+
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+
+            pdf_slice = pdf.iloc[start_index:end_index]
+            for index, row in pdf_slice.iterrows():
+                lista_df.append(row.tolist())
+
+            _metrics["fallback_count"] += 1
 
     # Aplica a função de projeção à lista de listas
     
