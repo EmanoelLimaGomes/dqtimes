@@ -251,6 +251,75 @@
             font-weight: normal;
             cursor: pointer;
         }
+
+        .divider {
+            margin: 40px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .divider-text {
+            color: #999;
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            font-size: 14px;
+        }
+
+        .manual-input-section {
+            margin-top: 30px;
+        }
+
+        .manual-input-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-hint {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .manual-form {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -308,9 +377,45 @@
             </button>
         </form>
 
+        <div class="divider">
+            <span class="divider-text">OU</span>
+        </div>
+
+        <div class="manual-input-section">
+            <h2>📝 Entrada Manual</h2>
+            <form id="manualForm" class="manual-form">
+                <div class="form-group">
+                    <label for="serie_manual">Série de Dados (separados por vírgula ou quebra de linha):</label>
+                    <textarea 
+                        id="serie_manual" 
+                        name="serie_manual" 
+                        placeholder="Exemplo: 10, 20, 30, 40, 50&#10;ou&#10;10&#10;20&#10;30&#10;40&#10;50"
+                        required
+                    ></textarea>
+                    <div class="input-hint">Digite os valores numéricos separados por vírgula ou um por linha</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantidade_projecoes_manual">Quantidade de Projeções:</label>
+                    <input 
+                        type="number" 
+                        id="quantidade_projecoes_manual" 
+                        name="quantidade_projecoes_manual" 
+                        min="1" 
+                        value="10" 
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn" id="submitManualBtn" style="width: 100%; margin-top: 25px;">
+                    Processar Série Manual
+                </button>
+            </form>
+        </div>
+
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 15px; color: #666;">Processando arquivo...</p>
+            <p style="margin-top: 15px; color: #666;">Processando dados...</p>
         </div>
 
         <div class="message" id="message"></div>
@@ -323,15 +428,15 @@
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
         const uploadForm = document.getElementById('uploadForm');
+        const manualForm = document.getElementById('manualForm');
         const message = document.getElementById('message');
         const loading = document.getElementById('loading');
         const submitBtn = document.getElementById('submitBtn');
+        const submitManualBtn = document.getElementById('submitManualBtn');
 
-        // Formatos aceitos
         const ACCEPTED_FORMATS = ['.csv'];
         const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-        // Função para formatar tamanho do arquivo
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -340,13 +445,11 @@
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
-        // Função para validar formato do arquivo
         function validateFileFormat(file) {
             const fileName = file.name.toLowerCase();
             return ACCEPTED_FORMATS.some(format => fileName.endsWith(format));
         }
 
-        // Função para exibir mensagem
         function showMessage(text, type) {
             message.textContent = text;
             message.className = `message ${type} show`;
@@ -355,36 +458,31 @@
             }, 5000);
         }
 
-        // Função para exibir informações do arquivo
         function displayFileInfo(file) {
             fileName.textContent = `📄 ${file.name}`;
             fileSize.textContent = `Tamanho: ${formatFileSize(file.size)}`;
             fileInfo.classList.add('show');
         }
 
-        // Validação de arquivo
         function validateFile(file) {
-            // Validar formato
             if (!validateFileFormat(file)) {
-                showMessage('❌ Formato não aceito! Apenas arquivos CSV são permitidos.', 'error');
+                showMessage('Formato não aceito! Apenas arquivos CSV são permitidos.', 'error');
                 return false;
             }
 
-            // Validar tamanho
             if (file.size > MAX_FILE_SIZE) {
-                showMessage(`❌ Arquivo muito grande! Tamanho máximo: ${formatFileSize(MAX_FILE_SIZE)}`, 'error');
+                showMessage(`Arquivo muito grande! Tamanho máximo: ${formatFileSize(MAX_FILE_SIZE)}`, 'error');
                 return false;
             }
 
             if (file.size === 0) {
-                showMessage('❌ O arquivo está vazio!', 'error');
+                showMessage('O arquivo está vazio!', 'error');
                 return false;
             }
 
             return true;
         }
 
-        // Event listeners para drag and drop
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
@@ -404,18 +502,17 @@
                 if (validateFile(file)) {
                     fileInput.files = files;
                     displayFileInfo(file);
-                    showMessage('✅ Arquivo selecionado com sucesso!', 'success');
+                    showMessage('Arquivo selecionado com sucesso!', 'success');
                 }
             }
         });
 
-        // Event listener para seleção de arquivo
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 if (validateFile(file)) {
                     displayFileInfo(file);
-                    showMessage('✅ Arquivo selecionado com sucesso!', 'success');
+                    showMessage('Arquivo selecionado com sucesso!', 'success');
                 } else {
                     fileInput.value = '';
                     fileInfo.classList.remove('show');
@@ -423,13 +520,12 @@
             }
         });
 
-        // Event listener para envio do formulário
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const file = fileInput.files[0];
             if (!file) {
-                showMessage('❌ Por favor, selecione um arquivo!', 'error');
+                showMessage('Por favor, selecione um arquivo!', 'error');
                 return;
             }
 
@@ -437,14 +533,12 @@
                 return;
             }
 
-            // Preparar dados do formulário
             const formData = new FormData();
             formData.append('csv_dataframe', file);
             formData.append('quantidade_projecoes', document.getElementById('quantidade_projecoes').value);
             formData.append('header', document.getElementById('header').value === 'true');
             formData.append('index_col', document.getElementById('index_col').value === 'true');
 
-            // Mostrar loading
             loading.classList.add('show');
             submitBtn.disabled = true;
             message.classList.remove('show');
@@ -459,19 +553,117 @@
 
                 if (response.ok) {
                     showMessage(
-                        `✅ Arquivo processado com sucesso! Tempo de execução: ${data.execution_time.toFixed(2)}s. Total de páginas: ${data.total_pages}`,
+                        `Arquivo processado com sucesso! Tempo de execução: ${data.execution_time.toFixed(2)}s. Total de páginas: ${data.total_pages}`,
                         'success'
                     );
-                    // Aqui você pode adicionar lógica para exibir os resultados
                     console.log('Resultados:', data);
                 } else {
-                    showMessage(`❌ Erro: ${data.detail || 'Erro ao processar arquivo'}`, 'error');
+                    showMessage(`Erro: ${data.detail || 'Erro ao processar arquivo'}`, 'error');
                 }
             } catch (error) {
-                showMessage(`❌ Erro de conexão: ${error.message}`, 'error');
+                showMessage(`Erro de conexão: ${error.message}`, 'error');
             } finally {
                 loading.classList.remove('show');
                 submitBtn.disabled = false;
+            }
+        });
+
+        function parseManualInput(input) {
+            if (!input || !input.trim()) {
+                return null;
+            }
+
+            const cleaned = input.trim();
+            let numbers = [];
+
+            if (cleaned.includes(',')) {
+                numbers = cleaned.split(',').map(n => n.trim()).filter(n => n);
+            } else {
+                numbers = cleaned.split(/\s+/).filter(n => n);
+            }
+
+            const parsed = numbers.map(n => {
+                const num = parseFloat(n);
+                if (isNaN(num)) {
+                    throw new Error(`Valor inválido: "${n}"`);
+                }
+                return num;
+            });
+
+            if (parsed.length === 0) {
+                throw new Error('Nenhum número válido encontrado');
+            }
+
+            return parsed;
+        }
+
+        function validateManualInput(input) {
+            try {
+                const parsed = parseManualInput(input);
+                if (!parsed || parsed.length < 3) {
+                    showMessage('A série deve conter pelo menos 3 valores numéricos', 'error');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                showMessage(error.message, 'error');
+                return false;
+            }
+        }
+
+        manualForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const serieInput = document.getElementById('serie_manual').value;
+            const quantidadeProjecoes = document.getElementById('quantidade_projecoes_manual').value;
+
+            if (!serieInput || !serieInput.trim()) {
+                showMessage('Por favor, digite uma série de dados!', 'error');
+                return;
+            }
+
+            if (!validateManualInput(serieInput)) {
+                return;
+            }
+
+            let listaNumeros;
+            try {
+                listaNumeros = parseManualInput(serieInput);
+            } catch (error) {
+                showMessage(error.message, 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('lista_historico', JSON.stringify(listaNumeros));
+            formData.append('quantidade_projecoes', quantidadeProjecoes);
+
+            loading.classList.add('show');
+            submitManualBtn.disabled = true;
+            message.classList.remove('show');
+
+            try {
+                const response = await fetch('/projecao_lista/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(
+                        `Série processada com sucesso! ${listaNumeros.length} valores processados.`,
+                        'success'
+                    );
+                    console.log('Resultados:', data);
+                } else {
+                    showMessage(`Erro: ${data.detail || 'Erro ao processar série'}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Erro de conexão: ${error.message}`, 'error');
+            } finally {
+                loading.classList.remove('show');
+                submitManualBtn.disabled = false;
             }
         });
     </script>
