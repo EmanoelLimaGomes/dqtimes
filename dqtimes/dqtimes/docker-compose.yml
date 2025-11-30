@@ -1,0 +1,42 @@
+services:
+  backend:
+    build: .
+    container_name: backend
+    env_file: .env
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build: .
+    container_name: celery
+    command: celery -A app.celery.app worker --loglevel=info
+    env_file: .env
+    depends_on:
+      - redis
+
+  flower:
+    image: mher/flower:2.0.1
+    container_name: flower
+    env_file: .env
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - FLOWER_PORT=${FLOWER_PORT}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
+    ports:
+      - "${FLOWER_PORT}:${FLOWER_PORT}"
+    depends_on:
+      - redis
+      - celery
+
+volumes:
+  redis_data:
