@@ -1,1 +1,0 @@
-from .aplicacao import interpolador1d_lib, forecast_temp
