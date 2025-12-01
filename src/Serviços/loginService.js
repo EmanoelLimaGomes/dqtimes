@@ -3,7 +3,7 @@
  * Gerencia as requisições de login com a API
  */
 
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config/apiConfig'
 
 /**
  * Realiza o login do usuário

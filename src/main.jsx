@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.jsx'
 import LoginPage from './Páginas/LoginPage.jsx'
 import HistoricoPage from './Páginas/HistoricoPage.jsx'
+import CriarPrevisaoPage from './Páginas/CriarPrevisaoPage.jsx'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -14,6 +15,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/criar-previsao",
+    element: <CriarPrevisaoPage />,
   },
   {
     path: "/historico",

@@ -8,11 +8,24 @@
   flex: 1;
   margin-left: 280px;
   min-height: 100vh;
+  transition: margin-left 0.3s ease;
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
   .main-content {
     margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0;
   }
 }
 

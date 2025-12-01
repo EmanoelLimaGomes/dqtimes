@@ -29,11 +29,11 @@ function LoginPage() {
   const validarFormulario = () => {
     const novosErros = {}
 
-    // Validação de email
+    // Validação de email (precisa ter @ e formato válido)
     if (!email.trim()) {
       novosErros.email = 'E-mail é obrigatório'
     } else if (!validarEmail(email)) {
-      novosErros.email = 'E-mail inválido'
+      novosErros.email = 'E-mail inválido. Deve conter @ e formato válido'
     }
 
     // Validação de senha
