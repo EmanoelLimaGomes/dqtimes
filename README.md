@@ -1,6 +1,6 @@
 # DQTimes - Sistema de Previsão de Séries Temporais
 
-## 🚀 Como Iniciar o Projeto
+## Como Iniciar o Projeto
 
 ### Pré-requisitos
 - Node.js instalado
