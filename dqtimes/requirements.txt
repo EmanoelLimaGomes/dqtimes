@@ -7,6 +7,9 @@ datetime
 uvicorn
 python-multipart
 bokeh
+SQLAlchemy>=2.0
+alembic>=1.13
+psycopg2-binary>=2.9
 celery
 redis
 requests
