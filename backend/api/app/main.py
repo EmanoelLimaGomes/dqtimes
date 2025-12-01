@@ -7,40 +7,88 @@ import tempfile
 from dask.distributed import Client, LocalCluster
 from app import forecast_temp
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query
+from fastapi.responses import Response
 import math
 import time
+
+# Prometheus imports
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_fastapi_instrumentator import Instrumentator
+from app.metrics import MetricsMiddleware, track_projection
 
 # Iniciar um cluster local e um cliente Dask
 cluster = LocalCluster()
 client = Client(cluster)
 
-app = FastAPI()
+app = FastAPI(
+    title="DQTimes API",
+    description="API de projeções temporais com observabilidade",
+    version="1.0.0"
+)
+
+# Adicionar middleware de métricas customizado
+app.add_middleware(MetricsMiddleware)
+
+# Instrumentar FastAPI com Prometheus
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=["/metrics"],
+    env_var_name="ENABLE_METRICS",
+    inprogress_name="fastapi_inprogress",
+    inprogress_labels=True,
+)
+
+instrumentator.instrument(app)
 
 
 @app.on_event("startup")
 async def startup_event():
     print(f"Dask Dashboard is available at {client.dashboard_link}")
+    instrumentator.expose(app, endpoint="/metrics")
+
+
+@app.get("/metrics")
+async def metrics():
+    """Endpoint para exposição de métricas do Prometheus."""
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/projecao_lista/")
-async def upload_file(
+async def projecao_lista(
     lista_historico: str = Form(...),
     quantidade_projecoes: int = Form(...),
 ):
-
+    start_time = time.time()
+    
     lista_original = json.loads(lista_historico)  # Convertendo para lista
-
     n = quantidade_projecoes 
 
     # Chamando a função de previsão
     resultado = forecast_temp(lista_original, n)
+    
+    # Registrar métricas de negócio
+    processing_time = time.time() - start_time
+    method_type = "unknown"
+    if isinstance(resultado, dict) and "final_projection" in resultado:
+        # Tentar identificar o método usado
+        method_type = "forecast_temp"
+    
+    track_projection(
+        endpoint="/projecao_lista/",
+        method_type=method_type,
+        dataset_size=len(lista_original),
+        processing_time=processing_time
+    )
 
     return {
         "projecoes": resultado
     }
 
 @app.post("/projecao_dataframe/")
-async def upload_file(
+async def projecao_dataframe(
     csv_dataframe: UploadFile = File(...),
     quantidade_projecoes: int = Form(...),
     header: bool = Form(...),
@@ -92,6 +140,14 @@ async def upload_file(
 
     end_time = time.time()
     execution_time = end_time - start_time 
+    
+    # Registrar métricas de negócio
+    track_projection(
+        endpoint="/projecao_dataframe/",
+        method_type="forecast_temp_batch",
+        dataset_size=len(lista_df),
+        processing_time=execution_time
+    )
 
     return {
         "execution_time": execution_time,

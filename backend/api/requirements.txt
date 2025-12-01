@@ -8,3 +8,5 @@ uvicorn
 python-multipart
 bokeh
 requests
+prometheus-client
+prometheus-fastapi-instrumentator

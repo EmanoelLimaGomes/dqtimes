@@ -9,6 +9,7 @@ RUN apt update && \
     pip install pybind11 "dask[distributed]" "dask[dataframe]" --upgrade
 
 COPY . .
+COPY app/libs /app/app/libs
 
 RUN pip install -r requirements.txt
 
