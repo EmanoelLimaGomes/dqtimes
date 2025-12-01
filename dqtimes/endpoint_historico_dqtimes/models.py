@@ -29,6 +29,7 @@ class Link(BaseModel):
 
 class HistoryItemBase(BaseModel):
     """ Esquema base para um item de histórico, com datas padronizadas. """
+    id: int = Field(..., description="ID único do registro no banco de dados.")
     referencia: str = Field(..., description="ID de referência da execução (UUID).")
     task: str = Field(..., description="Nome da tarefa executada (e.g., 'naive_bayes').")
     status: str = Field(..., description="Status da execução (e.g., 'SUCCESS', 'ERROR').")
@@ -68,6 +69,7 @@ class TaskHistory(Base):
 
     def to_dict(self, include_details=False):
         data = {
+            "id": self.id,
             "referencia": self.referencia,
             "task": self.task,
             "status": self.status,

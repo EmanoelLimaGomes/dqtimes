@@ -10,6 +10,8 @@ function HistoricoPage() {
   const [historico, setHistorico] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [modalAberto, setModalAberto] = useState(false)
+  const [detalhesSelecionados, setDetalhesSelecionados] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,37 +32,43 @@ function HistoricoPage() {
         // Cada item tem: referencia, task, status, created_at, finished_at, details (opcional)
         
         // Mapeia os dados da API para o formato esperado pela tabela
-        const historicoFormatado = resposta.items.map((item, index) => {
-          // Extrai informações dos detalhes se disponível
-          let serie = 'N/A'
-          let previsao = 'N/A'
-          
-          if (item.details) {
-            // Formata a previsão baseado no tipo de task e details disponíveis
-            if (item.details.projecao && Array.isArray(item.details.projecao)) {
-              previsao = `Projeção: ${item.details.projecao.slice(0, 5).join(', ')}${item.details.projecao.length > 5 ? '...' : ''}`
-            } else if (item.details.medias && Array.isArray(item.details.medias)) {
-              previsao = `Médias: ${item.details.medias.slice(0, 5).join(', ')}${item.details.medias.length > 5 ? '...' : ''}`
-            } else if (item.details.probabilidade_subir !== undefined) {
-              previsao = `Probabilidade: ${(item.details.probabilidade_subir * 100).toFixed(2)}%`
-            } else {
-              previsao = JSON.stringify(item.details).substring(0, 50) + '...'
+        const historicoFormatado = resposta.items.map((item) => {
+          // Formata as datas
+          const formatarData = (dataStr) => {
+            if (!dataStr) return 'N/A'
+            try {
+              const data = new Date(dataStr)
+              return data.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              })
+            } catch {
+              return dataStr
             }
-            
-            // Tenta extrair série dos detalhes ou usa a task como série
-            serie = item.details.serie || item.details.serie_temporal || item.details.nome_serie || item.task
-          } else {
-            // Se não houver details, usa informações básicas
-            serie = item.task
-            previsao = `Status: ${item.status}`
+          }
+
+          // Formata os details
+          let detailsFormatado = 'N/A'
+          if (item.details) {
+            try {
+              detailsFormatado = JSON.stringify(item.details, null, 2)
+            } catch {
+              detailsFormatado = String(item.details)
+            }
           }
           
           return {
-            id: index + 1,
-            referencia: item.referencia,
-            tarefa: item.task,
-            serie: serie,
-            previsao: previsao
+            id: item.id || 'N/A',
+            referencia: item.referencia || 'N/A',
+            task: item.task || 'N/A',
+            status: item.status || 'N/A',
+            created_at: formatarData(item.created_at),
+            finished_at: formatarData(item.finished_at),
+            details: detailsFormatado
           }
         })
         
@@ -80,12 +88,33 @@ function HistoricoPage() {
   const historicoFiltrado = historico.filter(item => {
     const buscaLower = busca.toLowerCase()
     return (
-      item.referencia.toLowerCase().includes(buscaLower) ||
-      item.tarefa.toLowerCase().includes(buscaLower) ||
-      item.serie.toLowerCase().includes(buscaLower) ||
-      item.previsao.toLowerCase().includes(buscaLower)
+      String(item.id).toLowerCase().includes(buscaLower) ||
+      String(item.referencia).toLowerCase().includes(buscaLower) ||
+      String(item.task).toLowerCase().includes(buscaLower) ||
+      String(item.status).toLowerCase().includes(buscaLower) ||
+      String(item.created_at).toLowerCase().includes(buscaLower) ||
+      String(item.finished_at).toLowerCase().includes(buscaLower) ||
+      String(item.details).toLowerCase().includes(buscaLower)
     )
   })
+
+  // Funções para o modal
+  const abrirModal = (item) => {
+    setDetalhesSelecionados(item)
+    setModalAberto(true)
+  }
+
+  const fecharModal = () => {
+    setModalAberto(false)
+    setDetalhesSelecionados(null)
+  }
+
+  const copiarParaClipboard = () => {
+    if (detalhesSelecionados?.details) {
+      navigator.clipboard.writeText(detalhesSelecionados.details)
+      alert('Details copiados para a área de transferência!')
+    }
+  }
 
   return (
     <Layout>
@@ -97,7 +126,7 @@ function HistoricoPage() {
             <input
               type="text"
               className="busca-input"
-              placeholder="Buscar por referência, tarefa, série ou previsão..."
+              placeholder="Buscar por ID, referência, task, status, datas ou details..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -120,19 +149,40 @@ function HistoricoPage() {
               <table className="tabela-historico">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>REFERÊNCIA</th>
-                    <th>TAREFA</th>
-                    <th>SÉRIE</th>
-                    <th>PREVISÃO</th>
+                    <th>TASK</th>
+                    <th>STATUS</th>
+                    <th>CREATED_AT</th>
+                    <th>FINISHED_AT</th>
+                    <th>DETAILS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {historicoFiltrado.map((item) => (
                     <tr key={item.id}>
+                      <td>{item.id}</td>
                       <td>{item.referencia}</td>
-                      <td>{item.tarefa}</td>
-                      <td>{item.serie}</td>
-                      <td>{item.previsao}</td>
+                      <td>{item.task}</td>
+                      <td>
+                        <span className={`status-badge status-${item.status?.toLowerCase()}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td>{item.created_at}</td>
+                      <td>{item.finished_at}</td>
+                      <td className="details-cell">
+                        {item.details !== 'N/A' ? (
+                          <button 
+                            className="btn-ver-details"
+                            onClick={() => abrirModal(item)}
+                          >
+                            Ver Details
+                          </button>
+                        ) : (
+                          <span>N/A</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -141,6 +191,60 @@ function HistoricoPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Details */}
+      {modalAberto && detalhesSelecionados && (
+        <div className="modal-overlay" onClick={fecharModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Detalhes do Registro #{detalhesSelecionados.id}</h3>
+              <button className="modal-close" onClick={fecharModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-info-grid">
+                <div className="info-item">
+                  <span className="info-label">ID:</span>
+                  <span className="info-value">{detalhesSelecionados.id}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Referência:</span>
+                  <span className="info-value">{detalhesSelecionados.referencia}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Task:</span>
+                  <span className="info-value">{detalhesSelecionados.task}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Status:</span>
+                  <span className={`info-value status-badge status-${detalhesSelecionados.status?.toLowerCase()}`}>
+                    {detalhesSelecionados.status}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Created At:</span>
+                  <span className="info-value">{detalhesSelecionados.created_at}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Finished At:</span>
+                  <span className="info-value">{detalhesSelecionados.finished_at}</span>
+                </div>
+              </div>
+              <div className="details-section">
+                <div className="details-header">
+                  <h4>Details (JSON)</h4>
+                  <button className="btn-copiar" onClick={copiarParaClipboard}>
+                    📋 Copiar
+                  </button>
+                </div>
+                <pre className="details-json">{detalhesSelecionados.details}</pre>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-fechar" onClick={fecharModal}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

@@ -40,12 +40,12 @@ npm run dev
 
 O frontend estará rodando em: **http://localhost:3000**
 
-## 🔐 Credenciais de Login
+##Credenciais de Login
 
 - **E-mail:** `admin@gmail.com`
 - **Senha:** `123`
 
-## 📚 Documentação da API
+## Documentação da API
 
 Após iniciar o backend, acesse:
 - **Swagger UI:** http://127.0.0.1:8000/docs

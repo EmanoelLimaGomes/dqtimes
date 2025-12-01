@@ -1,2 +1,4 @@
 # Endpoint de histórico DQTimes
 
+
+
