@@ -7,6 +7,15 @@ datetime
 uvicorn
 python-multipart
 bokeh
+celery
+redis
+requests
+sqlalchemy
+pydantic
+
+
+pytest
+requests
 pyarrow
 celery==5.3.6
 redis==5.0.1
